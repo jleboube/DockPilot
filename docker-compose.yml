@@ -13,8 +13,10 @@ services:
       - ${HOME}/docker:/host/docker:ro
       - ${HOME}/Docker:/host/Docker:ro
     environment:
-      - DOCKER_HOST=unix:///var/run/docker.sock
-      - PYTHONUNBUFFERED=1
+      # Explicitly set DOCKER_HOST to override any host environment variable
+      # This prevents malformed DOCKER_HOST values from the host system
+      DOCKER_HOST: "unix:///var/run/docker.sock"
+      PYTHONUNBUFFERED: "1"
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]

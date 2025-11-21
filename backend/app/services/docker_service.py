@@ -25,7 +25,27 @@ class DockerService:
         try:
             # Use explicit base_url instead of from_env() to avoid URL scheme issues
             base_url = settings.DOCKER_HOST
-            if not base_url:
+
+            # Sanitize and validate the Docker host URL
+            if not base_url or "http+docker" in base_url:
+                # Invalid or malformed URL detected, use default Unix socket
+                base_url = "unix:///var/run/docker.sock"
+                logger.warning(
+                    "invalid_docker_host_detected",
+                    original=settings.DOCKER_HOST,
+                    using_default=base_url
+                )
+
+            # Ensure we're using a valid scheme
+            if not (base_url.startswith("unix://") or
+                    base_url.startswith("tcp://") or
+                    base_url.startswith("http://") or
+                    base_url.startswith("https://")):
+                logger.warning(
+                    "invalid_docker_host_scheme",
+                    url=base_url,
+                    using_default="unix:///var/run/docker.sock"
+                )
                 base_url = "unix:///var/run/docker.sock"
 
             self.client = docker.DockerClient(base_url=base_url)
