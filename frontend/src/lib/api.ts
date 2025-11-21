@@ -1,7 +1,19 @@
 import axios from 'axios'
 import { ComposeApp, SystemInfo, DockerInfo, ResourceUsage, LogEntry } from '@/types'
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:48391'
+// Use relative URL if in browser, otherwise use env variable or default
+const getApiBaseUrl = () => {
+  if (typeof window !== 'undefined') {
+    // Client-side: use current hostname with backend port
+    const protocol = window.location.protocol
+    const hostname = window.location.hostname
+    return `${protocol}//${hostname}:48391`
+  }
+  // Server-side: use env variable or docker service name
+  return process.env.NEXT_PUBLIC_API_URL || 'http://backend:8000'
+}
+
+const API_BASE_URL = getApiBaseUrl()
 
 const api = axios.create({
   baseURL: API_BASE_URL,
