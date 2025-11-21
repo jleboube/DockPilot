@@ -34,7 +34,7 @@ clean: ## Stop and remove containers, volumes, and images
 dev-backend: ## Run backend in development mode
 	@cd backend && \
 	source venv/bin/activate && \
-	uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+	uvicorn app.main:app --reload --host 0.0.0.0 --port 48391
 
 dev-frontend: ## Run frontend in development mode
 	@cd frontend && npm run dev
@@ -55,10 +55,10 @@ ps: ## Show running containers
 
 health: ## Check health of services
 	@echo "Backend health:"
-	@curl -s http://localhost:8000/health | python -m json.tool || echo "Backend not responding"
+	@curl -s http://localhost:48391/health | python -m json.tool || echo "Backend not responding"
 	@echo ""
 	@echo "Frontend health:"
-	@curl -s http://localhost:3000 > /dev/null && echo "Frontend is up" || echo "Frontend not responding"
+	@curl -s http://localhost:38572 > /dev/null && echo "Frontend is up" || echo "Frontend not responding"
 
 setup: ## Initial setup (create .env, install dependencies)
 	@echo "Setting up DockPilot..."
@@ -79,10 +79,10 @@ install-frontend: ## Install frontend dependencies
 install: install-backend install-frontend ## Install all dependencies
 
 discover: ## Trigger app discovery
-	@curl -X POST http://localhost:8000/api/apps/discover | python -m json.tool
+	@curl -X POST http://localhost:48391/api/apps/discover | python -m json.tool
 
 docker-info: ## Get Docker info
-	@curl -s http://localhost:8000/api/docker/info | python -m json.tool
+	@curl -s http://localhost:48391/api/docker/info | python -m json.tool
 
 system-info: ## Get system info
-	@curl -s http://localhost:8000/api/system/info | python -m json.tool
+	@curl -s http://localhost:48391/api/system/info | python -m json.tool

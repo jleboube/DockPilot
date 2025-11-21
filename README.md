@@ -75,9 +75,9 @@ docker-compose up -d
 ```
 
 4. **Access the application**
-- Frontend: http://localhost:3000
-- Backend API: http://localhost:8000
-- API Docs: http://localhost:8000/docs
+- Frontend: http://localhost:38572
+- Backend API: http://localhost:48391
+- API Docs: http://localhost:48391/docs
 
 ### Development Setup
 
@@ -94,7 +94,7 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 
 # Run the server
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+uvicorn app.main:app --reload --host 0.0.0.0 --port 48391
 ```
 
 #### Frontend
@@ -145,7 +145,7 @@ Create a `.env` file in the root directory:
 
 ```bash
 # API Configuration
-NEXT_PUBLIC_API_URL=http://localhost:8000
+NEXT_PUBLIC_API_URL=http://localhost:48391
 BACKEND_URL=http://backend:8000
 
 # Docker Configuration
@@ -205,7 +205,7 @@ The dashboard shows:
 
 ## 📊 API Documentation
 
-Once running, visit http://localhost:8000/docs for interactive API documentation (Swagger UI).
+Once running, visit http://localhost:48391/docs for interactive API documentation (Swagger UI).
 
 ### Key Endpoints
 
@@ -240,7 +240,7 @@ sudo usermod -aG docker $USER
 **Error**: "Network error" or "Failed to fetch"
 
 **Solution**:
-1. Check backend is running: `curl http://localhost:8000/health`
+1. Check backend is running: `curl http://localhost:48391/health`
 2. Verify `NEXT_PUBLIC_API_URL` in `.env`
 3. Check CORS settings in `backend/app/core/config.py`
 

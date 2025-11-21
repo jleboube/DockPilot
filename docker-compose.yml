@@ -5,7 +5,7 @@ services:
       dockerfile: Dockerfile
     container_name: dockpilot-backend
     ports:
-      - "8000:8000"
+      - "48391:8000"
     volumes:
       # Mount Docker socket to manage Docker from container
       - /var/run/docker.sock:/var/run/docker.sock:ro
@@ -29,9 +29,9 @@ services:
       dockerfile: Dockerfile
     container_name: dockpilot-frontend
     ports:
-      - "3000:3000"
+      - "38572:3000"
     environment:
-      - NEXT_PUBLIC_API_URL=http://localhost:8000
+      - NEXT_PUBLIC_API_URL=http://localhost:48391
       - BACKEND_URL=http://backend:8000
     depends_on:
       backend:
