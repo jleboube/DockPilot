@@ -23,6 +23,8 @@ class Settings(BaseSettings):
 
     # App Discovery Settings
     SEARCH_PATHS: List[str] = [
+        os.path.expanduser("~/Development"),
+        os.path.expanduser("~/Trying_out"),
         os.path.expanduser("~/docker"),
         os.path.expanduser("~/Docker"),
         "/opt/apps",
