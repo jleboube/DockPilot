@@ -65,14 +65,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Fixed Docker client initialization error: "Not supported URL scheme http+docker"
 - Changed from `docker.from_env()` to explicit `docker.DockerClient(base_url=...)`
-- Added fallback to `unix:///var/run/docker.sock` when DOCKER_HOST is not set
-- Improved error handling and logging for Docker client initialization
+- Added validation and sanitization for DOCKER_HOST environment variable
+- Explicitly reject malformed URLs containing "http+docker" scheme
+- Added scheme validation to ensure only valid Docker connection URLs
+- Changed docker-compose.yml to use explicit key:value syntax to prevent host environment variable override
+- Added warning logs when invalid DOCKER_HOST detected
 
 ### Technical Details
-The Docker SDK's `from_env()` method was attempting to parse a malformed DOCKER_HOST environment variable, resulting in an invalid URL scheme. By explicitly specifying the base_url with a fallback to the standard Unix socket path, we ensure reliable Docker daemon connectivity.
+The Docker SDK was attempting to parse a malformed DOCKER_HOST environment variable from the host system, resulting in an invalid URL scheme (`http+docker`). This was happening because docker-compose was inheriting the host's DOCKER_HOST variable despite our explicit setting. By adding URL validation and sanitization logic, and changing the docker-compose syntax to use explicit key:value pairs instead of array syntax, we ensure the container always uses a valid Docker socket connection.
+
+### Root Cause
+The host system had a `DOCKER_HOST` environment variable set with a malformed value. Docker Compose's array-style environment syntax (`- VAR=value`) can still inherit host variables, while the key:value syntax (`VAR: "value"`) provides explicit override.
 
 ### Files Modified
-- `backend/app/services/docker_service.py` - Updated __init__ method (lines 24-36)
+- `backend/app/services/docker_service.py` - Added URL validation and sanitization (lines 24-56)
+- `docker-compose.yml` - Changed environment syntax to explicit key:value format
 
 ## [1.0.3] - 2024-11-20
 
