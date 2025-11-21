@@ -26,6 +26,10 @@ dist/
 *.swp
 *.swo
 *~
+CLAUDE.md
+AGENTS.md
+PORT_CHANGES.md
+PROJECT_SUMMARY.md
 
 # OS
 .DS_Store
