@@ -1,17 +1,30 @@
 # URGENT: DockPilot Container Rebuild Required
 
 ## Problem
-Your remote VM is running an **OLD Docker image** that doesn't have the DOCKER_HOST validation fixes. The error logs show line 51 in docker_service.py, but the current code has validation logic from lines 24-67.
+The Docker SDK is internally reading a malformed `DOCKER_HOST` environment variable **even when we explicitly provide a base_url parameter**. This causes the "Not supported URL scheme http+docker" error.
 
-## Root Cause Analysis
+## Root Cause Analysis (UPDATED)
 1. Your host system has `DOCKER_HOST` set to a malformed value like `http+docker://...`
-2. Docker Compose is passing this malformed value to the container
-3. The OLD container code doesn't validate/sanitize this value
-4. The Docker SDK fails when it tries to connect using the malformed URL
+2. Docker Compose passes this malformed value to the container
+3. Our Python code correctly reads `unix:///var/run/docker.sock` from settings
+4. **BUT** the Docker SDK (docker-py) **ignores our base_url** and reads `DOCKER_HOST` from the environment internally
+5. The Docker SDK fails when it tries to connect using the malformed environment variable
+
+### Evidence from Latest Logs
+```
+docker_host_from_settings      type=str value=unix:///var/run/docker.sock
+using_docker_host              base_url=unix:///var/run/docker.sock
+docker_client_init_failed      base_url=unix:///var/run/docker.sock error=Error while fetching server API version: Not supported URL scheme http+docker
+```
+
+Our code is using the correct URL, but the Docker SDK is still trying `http+docker`!
 
 ## Solution
-You **MUST rebuild the container** with the latest code that includes:
-- Comprehensive DOCKER_HOST validation
+Added an **entrypoint script** that sanitizes the DOCKER_HOST environment variable **before** Python starts. This prevents the Docker SDK from reading the malformed value.
+
+**Latest commit (a829d09)** includes:
+- **entrypoint.sh** - Detects and unsets malformed DOCKER_HOST at container startup
+- Comprehensive DOCKER_HOST validation in Python code
 - Malformed URL detection and sanitization
 - Fallback to `unix:///var/run/docker.sock`
 - Extensive logging for debugging
@@ -29,9 +42,9 @@ docker compose down
 git pull origin main
 
 # You should see these new commits:
-# - 1ed9271 "feat: Add comprehensive logging and improved validation for DOCKER_HOST"
+# - a829d09 "fix: Add entrypoint script to handle malformed DOCKER_HOST" (CRITICAL FIX)
+# - 1ed9271 "feat: Add comprehensive logging and improved validation"
 # - b3ad32f "Fix: Add validation and sanitization for DOCKER_HOST"
-# - 69be8c6 "docs: Add deployment guide for v1.0.4 fix"
 
 # Step 4: REBUILD the containers (this is critical!)
 docker compose build --no-cache backend
@@ -57,11 +70,16 @@ docker compose ps
 
 ## Expected Log Output (with fix applied)
 
-If your host has a malformed DOCKER_HOST, you should see:
-
+**From entrypoint.sh** (before Python starts):
 ```
-docker_host_from_settings value=http+docker://... type=str
-docker_host_http_plus_docker_detected original=http+docker://... using_default=unix:///var/run/docker.sock
+WARNING: Detected malformed DOCKER_HOST (http+docker://...), unsetting it
+INFO: Set DOCKER_HOST to unix:///var/run/docker.sock
+INFO: Starting application with DOCKER_HOST=unix:///var/run/docker.sock
+```
+
+**From Python application:**
+```
+docker_host_from_settings value=unix:///var/run/docker.sock type=str
 using_docker_host base_url=unix:///var/run/docker.sock
 docker_client_initialized_successfully base_url=unix:///var/run/docker.sock
 ```
