@@ -60,6 +60,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - PROJECT_SUMMARY.md with technical details
 - API documentation via Swagger UI
 
+## [1.0.3] - 2024-11-20
+
+### Fixed
+- Fixed Docker build error: "public directory not found"
+- Added `mkdir -p public` in builder stage to ensure directory exists
+- Created `frontend/public` directory with placeholder files
+- Added favicon.ico and robots.txt to public directory
+
+### Files Modified
+- `frontend/Dockerfile` - Added public directory creation in builder
+- `frontend/public/.gitkeep` - Ensures directory is tracked
+- `frontend/public/favicon.ico` - Placeholder favicon
+- `frontend/public/robots.txt` - Basic robots.txt
+
 ## [1.0.2] - 2024-11-20
 
 ### Changed
@@ -149,6 +163,7 @@ Using non-standard ports reduces exposure to automated port scanning and common 
 
 ## Version History
 
+- **v1.0.3** (2024-11-20) - Fixed Docker build error with public directory
 - **v1.0.2** (2024-11-20) - Security: Changed to non-standard ports
 - **v1.0.1** (2024-11-20) - Bug fixes for Docker Compose v2 compatibility
 - **v1.0.0** (2024-11-20) - Initial release with core MVP features
