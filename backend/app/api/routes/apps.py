@@ -5,7 +5,7 @@ from fastapi import APIRouter, HTTPException, Query
 from typing import List, Optional
 import structlog
 
-from app.models.compose import ComposeApp, AppActionRequest, ResourceUsage
+from app.models.compose import ComposeApp, AppActionRequest, ResourceUsage, DiscoverAppsRequest
 from app.services.docker_service import docker_service
 from app.services.compose_service import compose_service
 
@@ -32,11 +32,11 @@ async def list_apps():
 
 
 @router.post("/discover")
-async def refresh_apps(search_paths: Optional[List[str]] = None):
+async def refresh_apps(request: DiscoverAppsRequest = DiscoverAppsRequest()):
     """Discover/refresh Docker Compose applications"""
     try:
-        logger.info("discovering_apps", search_paths=search_paths)
-        apps = docker_service.discover_compose_apps(search_paths)
+        logger.info("discovering_apps", search_paths=request.search_paths)
+        apps = docker_service.discover_compose_apps(request.search_paths)
 
         # Update cache
         discovered_apps.clear()

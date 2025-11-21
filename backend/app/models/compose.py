@@ -111,6 +111,11 @@ class LogEntry(BaseModel):
     stream: str = "stdout"  # stdout or stderr
 
 
+class DiscoverAppsRequest(BaseModel):
+    """Request to discover Docker Compose apps"""
+    search_paths: Optional[List[str]] = None
+
+
 class HealthCheck(BaseModel):
     """Health check status"""
     service: str

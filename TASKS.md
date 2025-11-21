@@ -2,7 +2,7 @@
 
 ## Session Summary (2025-11-21)
 
-### Issue: Docker SDK "Not supported URL scheme http+docker" Error
+### Issue 1: Docker SDK "Not supported URL scheme http+docker" Error
 
 **Root Cause**: Library version incompatibility between docker-py and requests>=2.32.0
 
@@ -12,6 +12,27 @@ The docker-py library's `UnixHTTPAdapter` didn't override the new `get_connectio
 - `requests<2.32.0` (uses 2.31.0)
 - `urllib3<2.0.0` (uses 1.26.20)
 
+### Issue 2: Remote Deployment Issues
+
+**Issue 2a - Backend Healthcheck**: Backend marked unhealthy
+- Fixed healthcheck to use Python instead of curl (curl not installed in container)
+
+**Issue 2b - Network Error**: Frontend couldn't connect from remote browser
+- Made API URL dynamic using `window.location.hostname` instead of hardcoded localhost
+
+**Issue 2c - CORS Blocking**: OPTIONS preflight requests returning 400
+- Changed `CORS_ORIGINS` from localhost-only to `["*"]` to allow all origins
+
+### Issue 3: Discover Apps Returns 422 Error
+
+**Root Cause**: FastAPI request validation failure
+
+The frontend was sending `search_paths` in the request body, but the backend endpoint defined it as a default parameter (which FastAPI treats as a query parameter).
+
+**Solution**: Created Pydantic model for request body
+- Added `DiscoverAppsRequest` model to `backend/app/models/compose.py`
+- Updated `/api/apps/discover` endpoint to accept request body parameter
+
 ### Changes Made
 
 1. **backend/requirements.txt**
@@ -19,16 +40,34 @@ The docker-py library's `UnixHTTPAdapter` didn't override the new `get_connectio
    - Ensures compatibility with docker-py 6.1.3
 
 2. **docker-compose.yml**
-   - Fixed backend healthcheck to use Python instead of curl (curl not installed in container)
+   - Fixed backend healthcheck to use Python instead of curl
    - Changed from: `["CMD", "curl", "-f", "http://localhost:8000/health"]`
    - Changed to: `["CMD", "python", "-c", "import requests; exit(0 if requests.get('http://localhost:8000/health').status_code == 200 else 1)"]`
 
-3. **Testing Results**
+3. **frontend/src/lib/api.ts**
+   - Made API base URL dynamic based on `window.location.hostname`
+   - Allows remote access without hardcoding localhost
+
+4. **backend/app/core/config.py**
+   - Changed `CORS_ORIGINS` from `["http://localhost:*", "http://127.0.0.1:*"]` to `["*"]`
+   - Allows requests from any origin
+
+5. **backend/app/models/compose.py**
+   - Added `DiscoverAppsRequest` Pydantic model
+   - Properly defines request body structure for discover endpoint
+
+6. **backend/app/api/routes/apps.py**
+   - Updated `/discover` endpoint to accept `DiscoverAppsRequest` body parameter
+   - Changed from query parameter to request body parameter
+
+### Testing Results
    - ✅ Backend starts successfully
    - ✅ Docker client initializes without errors
    - ✅ All API endpoints respond correctly
    - ✅ Both containers are healthy
-   - ✅ Frontend connects to backend successfully
+   - ✅ Frontend connects to backend successfully from remote browser
+   - ✅ Statistics displaying correctly
+   - ✅ Discover Apps endpoint fixed (422 error resolved)
 
 ## Previous Session Tasks
 
