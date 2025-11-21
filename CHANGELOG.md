@@ -64,21 +64,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Fixed Docker client initialization error: "Not supported URL scheme http+docker"
+- **Added entrypoint script to sanitize DOCKER_HOST before Python starts** (critical fix)
 - Changed from `docker.from_env()` to explicit `docker.DockerClient(base_url=...)`
 - Added validation and sanitization for DOCKER_HOST environment variable
 - Explicitly reject malformed URLs containing "http+docker" scheme
 - Added scheme validation to ensure only valid Docker connection URLs
 - Changed docker-compose.yml to use explicit key:value syntax to prevent host environment variable override
-- Added warning logs when invalid DOCKER_HOST detected
+- Added comprehensive logging to track Docker initialization flow
 
 ### Technical Details
-The Docker SDK was attempting to parse a malformed DOCKER_HOST environment variable from the host system, resulting in an invalid URL scheme (`http+docker`). This was happening because docker-compose was inheriting the host's DOCKER_HOST variable despite our explicit setting. By adding URL validation and sanitization logic, and changing the docker-compose syntax to use explicit key:value pairs instead of array syntax, we ensure the container always uses a valid Docker socket connection.
+The Docker SDK (docker-py) internally reads the DOCKER_HOST environment variable **even when base_url is explicitly provided**. The host system had DOCKER_HOST set to a malformed value like `http+docker://...`, which was being inherited by the container. Our Python code correctly set `base_url="unix:///var/run/docker.sock"`, but the Docker SDK ignored this and read the malformed environment variable instead.
 
-### Root Cause
-The host system had a `DOCKER_HOST` environment variable set with a malformed value. Docker Compose's array-style environment syntax (`- VAR=value`) can still inherit host variables, while the key:value syntax (`VAR: "value"`) provides explicit override.
+**Solution:** Created an entrypoint script that runs **before** Python starts. This script:
+1. Detects malformed DOCKER_HOST values containing "http+docker"
+2. Unsets the malformed variable
+3. Sets DOCKER_HOST to the correct unix socket path
+4. Logs all actions for debugging
+
+This ensures the Docker SDK sees only valid values when it initializes, preventing the URL scheme error.
+
+### Root Cause (Updated)
+The host system had `DOCKER_HOST` set with a malformed value. Docker Compose passed this to the container. The Docker SDK library internally calls `os.getenv('DOCKER_HOST')` during client initialization, **ignoring the base_url parameter**. This is why explicit base_url didn't solve the issue - the SDK was reading directly from the environment.
 
 ### Files Modified
-- `backend/app/services/docker_service.py` - Added URL validation and sanitization (lines 24-56)
+- **`backend/entrypoint.sh`** - NEW: Pre-startup script to sanitize DOCKER_HOST
+- **`backend/Dockerfile`** - Added ENTRYPOINT to execute sanitization script
+- `backend/app/services/docker_service.py` - Added comprehensive logging and validation
 - `docker-compose.yml` - Changed environment syntax to explicit key:value format
 
 ## [1.0.3] - 2024-11-20
