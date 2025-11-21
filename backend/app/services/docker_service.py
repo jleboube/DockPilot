@@ -23,9 +23,14 @@ class DockerService:
 
     def __init__(self):
         try:
-            self.client = docker.from_env()
-            self.api_client = docker.APIClient(base_url=settings.DOCKER_HOST)
-            logger.info("docker_client_initialized")
+            # Use explicit base_url instead of from_env() to avoid URL scheme issues
+            base_url = settings.DOCKER_HOST
+            if not base_url:
+                base_url = "unix:///var/run/docker.sock"
+
+            self.client = docker.DockerClient(base_url=base_url)
+            self.api_client = docker.APIClient(base_url=base_url)
+            logger.info("docker_client_initialized", base_url=base_url)
         except DockerException as e:
             logger.error("docker_client_init_failed", error=str(e))
             raise

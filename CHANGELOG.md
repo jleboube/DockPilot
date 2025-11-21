@@ -60,6 +60,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - PROJECT_SUMMARY.md with technical details
 - API documentation via Swagger UI
 
+## [1.0.4] - 2024-11-21
+
+### Fixed
+- Fixed Docker client initialization error: "Not supported URL scheme http+docker"
+- Changed from `docker.from_env()` to explicit `docker.DockerClient(base_url=...)`
+- Added fallback to `unix:///var/run/docker.sock` when DOCKER_HOST is not set
+- Improved error handling and logging for Docker client initialization
+
+### Technical Details
+The Docker SDK's `from_env()` method was attempting to parse a malformed DOCKER_HOST environment variable, resulting in an invalid URL scheme. By explicitly specifying the base_url with a fallback to the standard Unix socket path, we ensure reliable Docker daemon connectivity.
+
+### Files Modified
+- `backend/app/services/docker_service.py` - Updated __init__ method (lines 24-36)
+
 ## [1.0.3] - 2024-11-20
 
 ### Fixed
@@ -163,6 +177,7 @@ Using non-standard ports reduces exposure to automated port scanning and common 
 
 ## Version History
 
+- **v1.0.4** (2024-11-21) - Fixed Docker client initialization error
 - **v1.0.3** (2024-11-20) - Fixed Docker build error with public directory
 - **v1.0.2** (2024-11-20) - Security: Changed to non-standard ports
 - **v1.0.1** (2024-11-20) - Bug fixes for Docker Compose v2 compatibility
