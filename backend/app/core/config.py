@@ -14,11 +14,9 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "DockPilot"
     VERSION: str = "1.0.0"
 
-    # CORS Settings
-    CORS_ORIGINS: List[str] = [
-        "http://localhost:38572",
-        "http://127.0.0.1:38572",
-    ]
+    # CORS Settings - Allow all origins for easier deployment
+    # In production, you should restrict this to specific domains
+    CORS_ORIGINS: List[str] = ["*"]
 
     # Docker Settings
     DOCKER_HOST: str = os.getenv("DOCKER_HOST", "unix:///var/run/docker.sock")
