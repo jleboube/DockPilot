@@ -24,35 +24,46 @@ class DockerService:
     def __init__(self):
         try:
             # Use explicit base_url instead of from_env() to avoid URL scheme issues
-            base_url = settings.DOCKER_HOST
+            raw_docker_host = settings.DOCKER_HOST
+            logger.info("docker_host_from_settings", value=raw_docker_host, type=type(raw_docker_host).__name__)
+
+            base_url = raw_docker_host
 
             # Sanitize and validate the Docker host URL
-            if not base_url or "http+docker" in base_url:
-                # Invalid or malformed URL detected, use default Unix socket
+            # Check for empty, None, or malformed values
+            if not base_url or not isinstance(base_url, str):
                 base_url = "unix:///var/run/docker.sock"
                 logger.warning(
-                    "invalid_docker_host_detected",
-                    original=settings.DOCKER_HOST,
+                    "docker_host_empty_or_invalid_type",
+                    original=raw_docker_host,
                     using_default=base_url
                 )
-
-            # Ensure we're using a valid scheme
-            if not (base_url.startswith("unix://") or
-                    base_url.startswith("tcp://") or
-                    base_url.startswith("http://") or
-                    base_url.startswith("https://")):
+            elif "http+docker" in base_url.lower():
+                # Malformed http+docker scheme detected
+                base_url = "unix:///var/run/docker.sock"
                 logger.warning(
-                    "invalid_docker_host_scheme",
-                    url=base_url,
+                    "docker_host_http_plus_docker_detected",
+                    original=raw_docker_host,
+                    using_default=base_url
+                )
+            elif not (base_url.startswith("unix://") or
+                      base_url.startswith("tcp://") or
+                      base_url.startswith("http://") or
+                      base_url.startswith("https://")):
+                # Invalid scheme
+                logger.warning(
+                    "docker_host_invalid_scheme",
+                    original=raw_docker_host,
                     using_default="unix:///var/run/docker.sock"
                 )
                 base_url = "unix:///var/run/docker.sock"
 
+            logger.info("using_docker_host", base_url=base_url)
             self.client = docker.DockerClient(base_url=base_url)
             self.api_client = docker.APIClient(base_url=base_url)
-            logger.info("docker_client_initialized", base_url=base_url)
+            logger.info("docker_client_initialized_successfully", base_url=base_url)
         except DockerException as e:
-            logger.error("docker_client_init_failed", error=str(e))
+            logger.error("docker_client_init_failed", error=str(e), base_url=base_url if 'base_url' in locals() else 'unknown')
             raise
 
     def is_docker_available(self) -> bool:
