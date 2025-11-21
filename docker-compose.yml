@@ -17,6 +17,17 @@ services:
       # This prevents malformed DOCKER_HOST values from the host system
       DOCKER_HOST: "unix:///var/run/docker.sock"
       PYTHONUNBUFFERED: "1"
+      # Clear any proxy settings that might interfere with Docker SDK
+      HTTP_PROXY: ""
+      HTTPS_PROXY: ""
+      http_proxy: ""
+      https_proxy: ""
+      NO_PROXY: "*"
+      no_proxy: "*"
+      # Clear other Docker-related env vars
+      DOCKER_CERT_PATH: ""
+      DOCKER_TLS_VERIFY: ""
+      DOCKER_CONFIG: ""
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
