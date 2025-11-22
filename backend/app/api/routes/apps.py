@@ -21,10 +21,8 @@ discovered_apps: dict[str, ComposeApp] = {}
 async def list_apps():
     """List all discovered Docker Compose applications"""
     try:
-        # Discover apps if not already cached
-        if not discovered_apps:
-            await refresh_apps()
-
+        # Return cached apps (empty if not discovered yet)
+        # User must click "Discover Apps" button to scan
         return list(discovered_apps.values())
     except Exception as e:
         logger.error("list_apps_failed", error=str(e))
