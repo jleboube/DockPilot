@@ -10,6 +10,8 @@ services:
       # Mount Docker socket to manage Docker from container
       - /var/run/docker.sock:/var/run/docker.sock:ro
       # Mount search paths for compose file discovery
+      - ${HOME}/Development:/host/Development:ro
+      - ${HOME}/Trying_out:/host/Trying_out:ro
       - ${HOME}/docker:/host/docker:ro
       - ${HOME}/Docker:/host/Docker:ro
     environment:
